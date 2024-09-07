@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audio Player with Metadata</title>
+    <style>
+        #audio-player {
+            display: block;
+            margin: 20px auto;
+        }
+        #metadata {
+            text-align: center;
+            margin-top: 20px;
+        }
+        #cover-art {
+            max-width: 300px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1 style="text-align:center;">Audio Player with Metadata</h1>
+    <input type="file" id="audio-file-input" accept="audio/*">
+    <audio id="audio-player" controls></audio>
+    <div id="metadata">
+        <div id="title"></div>
+        <div id="artist"></div>
+        <img id="cover-art" src="" alt="Cover Art">
+    </div>
+
+    <script>
+        const audioFileInput = document.getElementById('audio-file-input');
+        const audioPlayer = document.getElementById('audio-player');
+        const titleDiv = document.getElementById('title');
+        const artistDiv = document.getElementById('artist');
+        const coverArtImg = document.getElementById('cover-art');
+
+        audioFileInput.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                const url = URL.createObjectURL(file);
+                audioPlayer.src = url;
+
+                // Read metadata using jsmediatags
+                jsmediatags.read(file, {
+                    onSuccess: (tag) => {
+                        const tags = tag.tags;
+
+                        // Display title and artist
+                        titleDiv.textContent = `Title: ${tags.title || 'Unknown'}`;
+                        artistDiv.textContent = `Artist: ${tags.artist || 'Unknown'}`;
+
+                        // Display cover art if available
+                        if (tags.picture) {
+                            const picture = tags.picture;
+                            const base64String = btoa(
+                                new Uint8Array(picture.data)
+                                    .reduce((data, byte) => data + String.fromCharCode(byte), '')
+                            );
+                            coverArtImg.src = `data:${picture.format};base64,${base64String}`;
+                        } else {
+                            coverArtImg.src = '';
+                        }
+                    },
+                    onError: (error) => {
+                        console.error('Error reading tags: ', error);
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>
